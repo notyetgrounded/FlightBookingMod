@@ -15,16 +15,16 @@ namespace EuroTrip2.Models
 
         public int Price { get; set; }=0;
 
-        public int? Flight_Id { get; set; }
+        public int Flight_Id { get; set; }
 
         [ForeignKey("Flight_Id")]
-        public Flight Flight { get; set; }
+        public Flight? Flight { get; set; }
 
         
         public int TripRoute_Id { get; set; }
 
         [ForeignKey("TripRoute_Id")]
-        public TripRoute TripRoute { get; set; }
+        public TripRoute? TripRoute { get; set; }
 
         public ICollection<Booking>? Bookings { get; set; }
     }

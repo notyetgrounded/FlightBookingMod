@@ -45,18 +45,19 @@ namespace EuroTrip2.Controllers.Services
         }
 
         [HttpGet]
-        public async Task<ActionResult<MyBookingsView>> GetMyBookings(string EmailId)
+        public ActionResult<MyBookingsView> GetMyBookings(string EmailId)
         {
             
-            var user=_context.Users.FirstOrDefault(x=>x.Email==EmailId);
-            if (user==null )
+            var users=_context.Users.Where(x=>x.Email==EmailId);
+            if (users==null )
             {
                 return NotFound();
             }
+            var user = users.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
             MyBookingsView myBookingsView = new MyBookingsView();
             if (user.Bookings==null)
             {
-                return myBookingsView;
+                return NoContent();
             }
             var records = user.Bookings;
             myBookingsView.Bookings = new List<BookingsView>();
@@ -69,12 +70,16 @@ namespace EuroTrip2.Controllers.Services
                     DateTime = record.DateTime,
                     TripId = record.Trip_Id,
                     TripName = record.Trip.Name,
-                    Source = record.Trip.TripRoute.Source.Name,
-                    Destination = record.Trip.TripRoute.Destination.Name
+                    Source = GetLocation(record.Trip.TripRoute.Source_Id),
+                    Destination = GetLocation(record.Trip.TripRoute.Destination_Id)
                 };
                 myBookingsView.Bookings.Append(bookingsView);
             }
             return myBookingsView;
+        }
+        public string GetLocation(int id)
+        {
+            return _context.Places.FirstOrDefault(x => x.Id == id).Name;
         }
     }
 }

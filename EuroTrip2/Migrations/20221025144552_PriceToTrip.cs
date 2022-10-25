@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EuroTrip2.Migrations
 {
-    public partial class mig1 : Migration
+    public partial class PriceToTrip : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -16,8 +16,7 @@ namespace EuroTrip2.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SeatCount = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<int>(type: "int", nullable: false)
+                    SeatCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -105,6 +104,7 @@ namespace EuroTrip2.Migrations
                     SourceTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DestinationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PassengerCount = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<int>(type: "int", nullable: false),
                     Flight_Id = table.Column<int>(type: "int", nullable: false),
                     TripRoute_Id = table.Column<int>(type: "int", nullable: false)
                 },

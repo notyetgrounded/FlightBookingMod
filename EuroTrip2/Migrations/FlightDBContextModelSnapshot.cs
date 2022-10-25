@@ -71,9 +71,6 @@ namespace EuroTrip2.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
-
                     b.Property<int>("SeatCount")
                         .HasColumnType("int");
 
@@ -107,7 +104,8 @@ namespace EuroTrip2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Flight_Id")
+                    b.Property<int?>("Flight_Id")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -132,7 +130,8 @@ namespace EuroTrip2.Migrations
                     b.Property<DateTime>("DestinationTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Flight_Id")
+                    b.Property<int?>("Flight_Id")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -140,6 +139,9 @@ namespace EuroTrip2.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PassengerCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Price")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("SourceTime")

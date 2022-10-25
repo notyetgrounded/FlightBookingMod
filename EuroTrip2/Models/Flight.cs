@@ -11,7 +11,7 @@ namespace EuroTrip2.Models
         public string Name { get; set; }
         public int SeatCount { get; set; } 
         
-        public int Price { get; set; }
+        //public int Price { get; set; }
 
         public ICollection<Seat>? Seats { get; set; }
         public ICollection<Trip>? Trips { get; set; }

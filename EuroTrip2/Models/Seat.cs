@@ -9,10 +9,10 @@ namespace EuroTrip2.Models
         public int Id { get; set; }
         public string Name { get; set; }
 
-        public int? Flight_Id { get; set; }
+        public int Flight_Id { get; set; }
 
         [ForeignKey("Flight_Id")]
-        public Flight Flight { get; set; }
+        public Flight? Flight { get; set; }
 
         public ICollection<Booking>? Bookings { get; set; }
     }

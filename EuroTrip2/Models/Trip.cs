@@ -13,6 +13,8 @@ namespace EuroTrip2.Models
         public DateTime DestinationTime { get; set; }
         public int PassengerCount { get; set; }
 
+        public int Price { get; set; }=0;
+
         public int? Flight_Id { get; set; }
 
         [ForeignKey("Flight_Id")]

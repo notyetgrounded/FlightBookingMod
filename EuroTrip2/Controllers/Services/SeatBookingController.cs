@@ -14,6 +14,6 @@ namespace EuroTrip2.Controllers.Services
         {
             _context=context;
         }
-        public IActionResult<IEnumerable<bookin BookSeat()
+        //public IActionResult<IEnumerable<bookin BookSeat()
     }
 }

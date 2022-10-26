@@ -4,6 +4,7 @@ using EuroTrip2.ModelView;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol;
 using System.Data;
 
 namespace EuroTrip2.Controllers.Services
@@ -24,52 +25,39 @@ namespace EuroTrip2.Controllers.Services
         }
 
         [HttpGet]
-        public ActionResult<TripsListVist> GetTrips(int source_Id, int destination_Id,DateTime sourceTime,int passengerCount)
+        public ActionResult<IEnumerable<TripView>> GetTrips(int source_Id, int destination_Id,DateTime sourceTime,int passengerCount)
         {
-
-            var tripRoute= _context.TripRoutes.FirstOrDefault(x => x.Source_Id == source_Id && x.Destination_Id == destination_Id);
+            var tripRoute=_context.TripRoutes.FirstOrDefault(x=>x.Source_Id==source_Id && x.Destination_Id==destination_Id);
             if (tripRoute == null)
+            { return NoContent(); }
+            var directTrips = _context.Trips.Where(x => x.TripRoute == tripRoute && x.SourceTime >= sourceTime && x.PassengerCount >= passengerCount);
+            if (!directTrips.Any())
             {
-                return NotFound();
-            }    
-            //tripRoute.Trips
-            var trips = _context.Trips.Where(x=>x.TripRoute_Id == tripRoute.Id && x.SourceTime>=sourceTime && x.PassengerCount>=passengerCount).Include(x=>x.Flight).Include(x=>x.TripRoute.Source).Include(x=>x.);
-            //var res = _context.Trips.Where(x=>x.TripRoute_Id==route);
-            if (trips== null)
-            {
-                return NotFound();
+                return NoContent();
             }
-            TripsListVist tripsListVist = new TripsListVist();
-            tripsListVist.TripsViews =  new List<TripsView>();
-            var routes = _context.TripRoutes.Include(x => x.Source).Include(x => x.Destination);
-            
-            foreach (var trp in trips)
+            directTrips=directTrips.Include(x=>x.TripRoute).ThenInclude(x=>x.Source).Include(x=>x.TripRoute).ThenInclude(x=>x.Destination).Include(x=>x.Flight);
+            List<TripView> tripViews = new List<TripView>();
+
+            foreach (var trip in directTrips)
             {
-                // loop for connecting flights
-                var thisRoute = routes.First(x => x.Id == trp.Id);
-                TripsView completeTrip = new TripsView();
-                completeTrip.AirLines = trp.Flight.Name;
-                completeTrip.Source = thisRoute.Source.Name;
-                completeTrip.SourceTime = trp.SourceTime;
-                //inner loop
-                completeTrip.Stops += 1;
-                completeTrip.Destination = thisRoute.Destination.Name;
-                completeTrip.DestinationTime = trp.DestinationTime;
-                completeTrip.Price += trp.Price;
-                var tripView= new TripView();
-                tripView.Price = trp.Price;
-                tripView.Name = trp.Name;
-                tripView.FlightName = trp.Flight.Name;
-                tripView.Id=trp.Id;
-                tripView.SeatCount = trp.PassengerCount;
-                //endloop
-                completeTrip.Trips.Append(tripView);
-                //endloop
-                tripsListVist.TripsViews.Append(completeTrip);
+                TripView tripView = new TripView();
+                tripView.TripIds.Add(trip.Id);
+                tripView.FlightName = tripView.FlightName;
+                tripView.Source = trip.TripRoute.Source.Name;
+                tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
+                tripView.Destination = trip.TripRoute.Destination.Name;
+                tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+                tripView.DestinationTime = trip.DestinationTime;
+                tripView.SourceTime = trip.SourceTime;
+                tripView.Price = trip.Price;
+                tripView.Name = trip.Name;
+                tripView.stops = 0;
+                tripView.SeatCount = trip.PassengerCount;
+                tripViews.Add(tripView);
             }
 
+            return tripViews;
 
-            return tripsListVist;
         }
 
         

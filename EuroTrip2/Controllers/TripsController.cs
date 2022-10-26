@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
+using EuroTrip2.ModelView;
 
 namespace EuroTrip2.Controllers
 {
@@ -23,9 +24,33 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Trips
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Trip>>> GetTrips()
+        public ActionResult<IEnumerable<AdminTripView>> GetTrips()
         {
-            return await _context.Trips.ToListAsync();
+            var temp = _context.Trips;
+            if(!temp.Any())
+            {
+                return NoContent();
+            }
+            var trips = temp.Include(x => x.Flight).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Source);
+            List<AdminTripView> result = new List<AdminTripView>();
+            foreach(var trip in trips)
+            {
+                AdminTripView tripView = new AdminTripView();
+                tripView.Price = trip.Price;
+                tripView.SourceTime = trip.SourceTime;
+                tripView.SourceName = trip.TripRoute.Source.Name;
+                tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
+                tripView.DestinationName = trip.TripRoute.Destination.Name;
+                tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+                tripView.Id = trip.Id;
+                tripView.FlightId = trip.Flight_Id;
+                tripView.FlightName = trip.Flight.Name;
+                tripView.Name = trip.Name;
+                result.Add(tripView);
+            }
+            return result;
+
+            
         }
 
         // GET: api/Trips/5

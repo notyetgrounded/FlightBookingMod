@@ -5,6 +5,7 @@
         public int BookingId    { get; set; }
         public string PassengerName { get; set; }
         public int PassengerAge { get; set; }
+        public short PassengerGender { get; set; }
         public DateTime DateTime { get; set; }
         public string Status { get; set; }
         public int TripId { get; set; }

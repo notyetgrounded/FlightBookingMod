@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using EuroTrip2.Options;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
 
@@ -10,6 +11,7 @@ namespace EuroTrip2.Models
         public int Id { get; set; }
         public string PassengerName { get; set; }
         public int PassengerAge { get; set; }
+        public short PassengerGender { get; set; } = (int)Gender.NotKnown;
         public DateTime DateTime { get; set; }=DateTime.Now;
         public int Status { get; set; }
 

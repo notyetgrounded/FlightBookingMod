@@ -8,6 +8,14 @@
         Declined = 4
 
     }
+    public enum Gender
+    { 
+        NotKnown=0,
+        Male=1,
+        Female=2,
+        NotApplicable=9
+    }
+
     public class Options
     {
         

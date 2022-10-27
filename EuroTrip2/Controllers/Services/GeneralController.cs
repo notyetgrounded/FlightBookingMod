@@ -120,11 +120,15 @@ namespace EuroTrip2.Controllers.Services
                 {
                     BookingId = record.Id,
                     PassengerName = record.PassengerName,
+                    PassengerAge = record.PassengerAge,
+                    PassengerGender = record.PassengerGender,
                     DateTime = record.DateTime,
                     TripId = (int)record.Trip_Id,
                     TripName = record.Trip.Name,
                     Source = GetLocation(record.Trip.TripRoute.Source_Id),
-                    Destination = GetLocation(record.Trip.TripRoute.Destination_Id)
+                    Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
+                    Status = (string)Enum.ToObject(typeof(BookingStatus),record.Status)
+
                 };
                 myBookingsView.Bookings.Append(bookingsView);
             }

@@ -42,6 +42,8 @@ namespace EuroTrip2.Controllers
                 tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
                 tripView.DestinationName = trip.TripRoute.Destination.Name;
                 tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+                tripView.TripRoute_Id = trip.TripRoute_Id;
+                tripView.DestinationTime = trip.DestinationTime;
                 tripView.Id = trip.Id;
                 tripView.FlightId = trip.Flight_Id;
                 tripView.FlightName = trip.Flight.Name;

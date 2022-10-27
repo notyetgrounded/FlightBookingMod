@@ -10,7 +10,10 @@
         public string SourceIOTA { get; set; }
         public DateTime SourceTime { get; set; }
         public string DestinationName { get; set; }
+        public int TripRoute_Id { get; set; }
         public string DestinationIOTA { get; set; }
+        public DateTime DestinationTime { get; set; }
+        
         public int Price { get; set; }
         public int PassengerCount { get; set; }
     }

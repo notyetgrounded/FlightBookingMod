@@ -5,7 +5,10 @@ using EuroTrip2.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using NuGet.Configuration;
 using NuGet.Protocol;
+using System.Collections.Immutable;
 using System.Data;
 
 namespace EuroTrip2.Controllers.Services
@@ -26,38 +29,69 @@ namespace EuroTrip2.Controllers.Services
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<TripView>> GetTrips(int source_Id, int destination_Id,DateTime sourceTime,int passengerCount)
+        public ActionResult<IEnumerable<CompleteTrip>> GetTrips(int source_Id, int destination_Id,DateTime sourceTime,int passengerCount)
         {
-            var tripRoute=_context.TripRoutes.FirstOrDefault(x=>x.Source_Id==source_Id && x.Destination_Id==destination_Id);
-            if (tripRoute == null)
-            { return NoContent(); }
-            var directTrips = _context.Trips.Where(x => x.TripRoute == tripRoute && x.SourceTime >= sourceTime && x.PassengerCount >= passengerCount);
-            if (!directTrips.Any())
+            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==source_Id && x.Destination_Id==destination_Id);
+            //if (tripRoute == null)
+            //{ return NoContent(); }
+            var gap = 5;
+            List<CompleteTrip> completeTrips = new List<CompleteTrip>();
+            foreach (var route in tripRoute)
             {
-                return NoContent();
-            }
-            directTrips=directTrips.Include(x=>x.TripRoute).ThenInclude(x=>x.Source).Include(x=>x.TripRoute).ThenInclude(x=>x.Destination).Include(x=>x.Flight);
-            List<TripView> tripViews = new List<TripView>();
+                var directTripIds = _context.Trips.Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap)).Select(x => x.Id).ToList();
 
-            foreach (var trip in directTrips)
+                foreach (var tripId in directTripIds)
+                {
+
+                    var completeTrip = new CompleteTrip();
+                    completeTrip.TripViews = new List<TripView>() { FillTripView(tripId,_context) };
+                    completeTrips.Add(completeTrip);
+                }
+            }
+            var oneStopRoutes = from route1 in _context.TripRoutes.Where(x => x.Source_Id == source_Id)
+                                join route2 in _context.TripRoutes.Where(x => x.Destination_Id == destination_Id)
+                                on route1.Destination_Id equals route2.Source_Id
+                                select new List<int>() { route1.Id, route2.Id };
+            foreach (var route in oneStopRoutes)
             {
-                TripView tripView = new TripView();
-                tripView.TripIds.Add(trip.Id);
-                tripView.FlightName = tripView.FlightName;
-                tripView.Source = trip.TripRoute.Source.Name;
-                tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
-                tripView.Destination = trip.TripRoute.Destination.Name;
-                tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
-                tripView.DestinationTime = trip.DestinationTime;
-                tripView.SourceTime = trip.SourceTime;
-                tripView.Price = trip.Price;
-                tripView.Name = trip.Name;
-                tripView.stops = 0;
-                tripView.SeatCount = trip.PassengerCount;
-                tripViews.Add(tripView);
+                
+                var combinations = from trip1 in _context.Trips.Where(x => x.TripRoute_Id == route[0] && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap))
+                                   from trip2 in _context.Trips.Where(x => x.TripRoute_Id == route[1] && x.SourceTime >= trip1.DestinationTime && x.SourceTime <= trip1.DestinationTime.AddDays(gap))
+                                   select new List<TripView>() { FillTripView(trip1.Id,_context), FillTripView(trip2.Id,_context) };
+                foreach(var trip in combinations)
+                {
+                    var completeTrip = new CompleteTrip();
+                    completeTrip.TripViews= trip;
+                    completeTrips.Add(completeTrip);
+                }
             }
 
-            return tripViews;
+            return completeTrips;
+
+        }
+        [NonAction]
+        static public TripView FillTripView(int id,FlightDBContext dBContext)
+        {
+            var trip = dBContext.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
+           
+            TripView tripView = new TripView();
+            if (trip == null)
+            {
+                return tripView;
+            }
+
+            tripView.Id=trip.Id;
+            tripView.FlightName = tripView.FlightName;
+            tripView.SourceName = trip.TripRoute.Source.Name;
+            tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
+            tripView.DestinationName = trip.TripRoute.Destination.Name;
+            tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+            tripView.DestinationTime = trip.DestinationTime;
+            tripView.SourceTime = trip.SourceTime;
+            tripView.Price = trip.Price;
+            tripView.Name = trip.Name;
+            tripView.PassengerCount = trip.PassengerCount;
+            return tripView;
 
         }
 

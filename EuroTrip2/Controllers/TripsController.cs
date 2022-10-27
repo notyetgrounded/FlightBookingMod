@@ -102,7 +102,10 @@ namespace EuroTrip2.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Trip>> PostTrip(Trip trip)
-        {
+        {   if(trip.PassengerCount==0 )
+            {
+                trip.PassengerCount = _context.Flights.FirstOrDefault(x => x.Id == trip.Flight_Id).SeatCount;
+            }
             _context.Trips.Add(trip);
             await _context.SaveChangesAsync();
 

@@ -1,6 +1,7 @@
 ﻿using EuroTrip2.Contexts;
 using EuroTrip2.Models;
 using EuroTrip2.ModelView;
+using EuroTrip2.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -100,5 +101,47 @@ namespace EuroTrip2.Controllers.Services
         {
             return _context.Places.FirstOrDefault(x => x.Id == id).Name;
         }
+
+
+        [HttpGet]
+        public ActionResult<SeatsView> GetSeatStatusByTripId(int id )
+        {
+            var temp = _context.Trips.Where(x => x.Id == id);
+            if (!temp.Any())
+            {
+                return NotFound();
+            }
+            var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).First();
+            var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
+            if (!seats.Any())
+            {
+                return NoContent();
+            }
+            var seatsView = new SeatsView();
+            seatsView.Price=trip.Price;
+            seatsView.TripName = trip.Name;
+            seatsView.TripId = trip.Id;
+            seatsView.Destination = trip.TripRoute.Destination.Name;
+            seatsView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+            seatsView.DestinationTime = trip.DestinationTime;
+            seatsView.Source = trip.TripRoute.Source.Name;
+            seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
+            seatsView.SourceTime = trip.SourceTime;
+            var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
+            foreach(var seat in seats)
+            {
+                var seatStatus = new SeatStatus();
+                seatStatus.SeatName=seat.Name; 
+                seatStatus.SeatId= seat.Id;
+                seatStatus.Status = true;
+                if (bookedSeatsIds.Contains(seat.Id))
+                {
+                    seatStatus.Status = false;
+                }
+                seatsView.Seats.Append(seatStatus);
+            }
+            return seatsView;
+        }
+
     }
 }

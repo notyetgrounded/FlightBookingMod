@@ -81,7 +81,20 @@ namespace EuroTrip2.Controllers
         {
             _context.Flights.Add(flight);
             await _context.SaveChangesAsync();
-
+            int id= flight.Id;
+            char letter = 'A';
+            for (int i = 0; i < flight.SeatCount / 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    var seat = new Seat();
+                    seat.Name=j.ToString() + letter;
+                    seat.Flight_Id = flight.Id;
+                    _context.Add(seat);
+                }
+                letter++;
+            }
+            await _context.SaveChangesAsync();
             return CreatedAtAction("GetFlight", new { id = flight.Id }, flight);
         }
 

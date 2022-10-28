@@ -36,6 +36,7 @@ namespace EuroTrip2.Controllers
             foreach(var trip in trips)
             {
                 AdminTripView tripView = new AdminTripView();
+                tripView.PassengerCount=trip.PassengerCount;
                 tripView.Price = trip.Price;
                 tripView.SourceTime = trip.SourceTime;
                 tripView.SourceName = trip.TripRoute.Source.Name;

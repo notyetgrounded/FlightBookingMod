@@ -29,9 +29,9 @@ namespace EuroTrip2.Controllers.Services
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CompleteTrip>> GetTrips(int source_Id, int destination_Id,DateTime sourceTime,int passengerCount)
+        public ActionResult<IEnumerable<CompleteTrip>> GetTrips(int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
         {
-            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==source_Id && x.Destination_Id==destination_Id);
+            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==sourceId && x.Destination_Id==destinationId);
             //if (tripRoute == null)
             //{ return NoContent(); }
             var gap = 5;
@@ -48,8 +48,8 @@ namespace EuroTrip2.Controllers.Services
                     completeTrips.Add(completeTrip);
                 }
             }
-            var oneStopRoutes = from route1 in _context.TripRoutes.Where(x => x.Source_Id == source_Id)
-                                join route2 in _context.TripRoutes.Where(x => x.Destination_Id == destination_Id)
+            var oneStopRoutes = from route1 in _context.TripRoutes.Where(x => x.Source_Id == sourceId)
+                                join route2 in _context.TripRoutes.Where(x => x.Destination_Id == destinationId)
                                 on route1.Destination_Id equals route2.Source_Id
                                 select new List<int>() { route1.Id, route2.Id };
             foreach (var route in oneStopRoutes)
@@ -98,22 +98,25 @@ namespace EuroTrip2.Controllers.Services
         
 
         [HttpGet]
-        public ActionResult<MyBookingsView> GetMyBookings(string EmailId)
+        public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
         {
             
-            var userQueary=_context.Users.Where(x=>x.Email==EmailId);
+            var userQueary=_context.Users.Where(x=>x.Email==email);
             if (userQueary==null  )
             {
                 return NotFound();
             }
             var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
-            MyBookingsView myBookingsView = new MyBookingsView();
+            
+            
+            
             if (user.Bookings==null)
             {
                 return NoContent();
             }
             var records = user.Bookings;
-            myBookingsView.Bookings = new List<BookingsView>();
+            List<BookingsView> bookings = new List<BookingsView>(); 
+            
             foreach(var record in records)
             {
                 BookingsView bookingsView = new BookingsView()
@@ -127,12 +130,13 @@ namespace EuroTrip2.Controllers.Services
                     TripName = record.Trip.Name,
                     Source = GetLocation(record.Trip.TripRoute.Source_Id),
                     Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
-                    Status = (string)Enum.ToObject(typeof(BookingStatus),record.Status)
+                    Status = Enum.GetName(typeof(Options.BookingStatus),record.Status)
 
                 };
-                myBookingsView.Bookings.Append(bookingsView);
+                
+                bookings.Add(bookingsView);
             }
-            return myBookingsView;
+            return bookings;
         }
         [NonAction]
         public string GetLocation(int id)
@@ -149,7 +153,7 @@ namespace EuroTrip2.Controllers.Services
             {
                 return NotFound();
             }
-            var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).First();
+            var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
             var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
             if (!seats.Any())
             {
@@ -165,6 +169,9 @@ namespace EuroTrip2.Controllers.Services
             seatsView.Source = trip.TripRoute.Source.Name;
             seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
             seatsView.SourceTime = trip.SourceTime;
+            
+            var seatStatusList = new List<SeatStatus>();
+            
             var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
             foreach(var seat in seats)
             {
@@ -176,8 +183,9 @@ namespace EuroTrip2.Controllers.Services
                 {
                     seatStatus.Status = false;
                 }
-                seatsView.Seats.Append(seatStatus);
+                seatStatusList.Add(seatStatus);
             }
+            seatsView.Seats=seatStatusList;
             return seatsView;
         }
 

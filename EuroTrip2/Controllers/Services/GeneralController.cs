@@ -44,7 +44,7 @@ namespace EuroTrip2.Controllers.Services
                 {
 
                     var completeTrip = new CompleteTrip();
-                    completeTrip.TripViews = new List<TripView>() { FillTripView(tripId,_context) };
+                    completeTrip.TripViews = new List<TripView>() { FillTripView(tripId) };
                     completeTrips.Add(completeTrip);
                 }
             }

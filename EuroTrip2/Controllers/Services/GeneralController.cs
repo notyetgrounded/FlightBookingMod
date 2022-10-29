@@ -57,11 +57,16 @@ namespace EuroTrip2.Controllers.Services
                 
                 var combinations = from trip1 in _context.Trips.Where(x => x.TripRoute_Id == route[0] && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap))
                                    from trip2 in _context.Trips.Where(x => x.TripRoute_Id == route[1] && x.SourceTime >= trip1.DestinationTime && x.SourceTime <= trip1.DestinationTime.AddDays(gap))
-                                   select new List<TripView>() { FillTripView(trip1.Id,_context), FillTripView(trip2.Id,_context) };
-                foreach(var trip in combinations)
+                                   select new List<int>() { trip1.Id,trip2.Id};
+                foreach(var trips in combinations)
                 {
                     var completeTrip = new CompleteTrip();
-                    completeTrip.TripViews= trip;
+                    var tripViews = new List<TripView>();
+                    foreach(var tripid in trips)
+                    {
+                        tripViews.Add(FillTripView(tripid));    
+                    }
+                    completeTrip.TripViews= tripViews;
                     completeTrips.Add(completeTrip);
                 }
             }
@@ -70,9 +75,9 @@ namespace EuroTrip2.Controllers.Services
 
         }
         [NonAction]
-        static public TripView FillTripView(int id,FlightDBContext dBContext)
+        public TripView FillTripView(int id)
         {
-            var trip = dBContext.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
+            var trip = _context.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
            
             TripView tripView = new TripView();
             if (trip == null)

@@ -38,7 +38,7 @@ namespace EuroTrip2.Controllers.Services
             List<CompleteTrip> completeTrips = new List<CompleteTrip>();
             foreach (var route in tripRoute)
             {
-                var directTripIds = _context.Trips.Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap)).Select(x => x.Id).ToList();
+                var directTripIds = _context.Trips.AsNoTracking().Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap)).Select(x => x.Id).ToList();
 
                 foreach (var tripId in directTripIds)
                 {
@@ -77,7 +77,7 @@ namespace EuroTrip2.Controllers.Services
         [NonAction]
         public TripView FillTripView(int id)
         {
-            var trip = _context.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
+            var trip = _context.Trips.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
            
             TripView tripView = new TripView();
             if (trip == null)
@@ -158,7 +158,7 @@ namespace EuroTrip2.Controllers.Services
             {
                 return NotFound();
             }
-            var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
+            var trip = temp.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
             var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
             if (!seats.Any())
             {

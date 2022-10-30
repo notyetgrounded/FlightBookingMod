@@ -19,7 +19,7 @@ namespace EuroTrip2.Controllers.Services
             _context=context;
         }
         [HttpPost]
-        public ActionResult<HttpResponseMessage> BookSeats(MakeBookingView makeBooking)
+        public async Task<ActionResult<HttpResponseMessage>> BookSeats(MakeBookingView makeBooking)
         {
            
             if (makeBooking.Email == null){ return BadRequest(); }
@@ -30,7 +30,7 @@ namespace EuroTrip2.Controllers.Services
                 user.Email =makeBooking.Email;
                 user.Name= makeBooking.Name;
                 _context.Add(user);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
             var trip = _context.Trips.Find(makeBooking.TripId);
             var passengers = makeBooking.Passengers;
@@ -58,9 +58,10 @@ namespace EuroTrip2.Controllers.Services
                 booking.Id = id;
                 trip.PassengerCount--;
                 _context.Bookings.Add(booking);
-                _context.SaveChanges();
+                
 
             }
+            await _context.SaveChangesAsync();
             return Ok();
         }
         [NonAction]
@@ -74,14 +75,14 @@ namespace EuroTrip2.Controllers.Services
             return FreeSeats;
         }
         [HttpDelete]
-        public ActionResult<HttpResponseMessage> CancelBooking (string Email,int booking_Id,string passengerName)
+        public async Task<ActionResult<HttpResponseMessage>> CancelBooking (string Email,int booking_Id,string passengerName)
         {
             var bookings = _context.Bookings.Include(x=>x.User).Where(x=>x.Id==booking_Id && x.PassengerName==passengerName && x.User.Email==Email);
             if (bookings.Any() == null) { BadRequest(); }
             var currentBooking = bookings.Include(x => x.Trip).First();
             currentBooking.Status = (int)Options.BookingStatus.Cancelled;
             currentBooking.Trip.PassengerCount++;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok();
 
         }

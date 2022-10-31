@@ -29,25 +29,10 @@ namespace EuroTrip2.Controllers.Services
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CompleteTrip>> GetTrips(int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
+        public ActionResult<IEnumerable<CompleteTrip>> GetOneStopTrips(int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
         {
-            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==sourceId && x.Destination_Id==destinationId);
-            //if (tripRoute == null)
-            //{ return NoContent(); }
-            var gap = 5;
             List<CompleteTrip> completeTrips = new List<CompleteTrip>();
-            foreach (var route in tripRoute)
-            {
-                var directTripIds = _context.Trips.AsNoTracking().Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap)).Select(x => x.Id).ToList();
 
-                foreach (var tripId in directTripIds)
-                {
-
-                    var completeTrip = new CompleteTrip();
-                    completeTrip.TripViews = new List<TripView>() { FillTripView(tripId) };
-                    completeTrips.Add(completeTrip);
-                }
-            }
             var oneStopRoutes = from route1 in _context.TripRoutes.Where(x => x.Source_Id == sourceId)
                                 join route2 in _context.TripRoutes.Where(x => x.Destination_Id == destinationId)
                                 on route1.Destination_Id equals route2.Source_Id
@@ -73,6 +58,28 @@ namespace EuroTrip2.Controllers.Services
 
             return completeTrips;
 
+        }
+        public ActionResult<IEnumerable<TripView>> GetTrips(int sourceId, int destinationId, DateTime sourceTime, int passengerCount)
+        {
+            var tripRoute = _context.TripRoutes.Where(x => x.Source_Id == sourceId && x.Destination_Id == destinationId);
+            //if (tripRoute == null)
+            //{ return NoContent(); }
+            
+            List<TripView> Trips= new List<TripView>();
+            
+            foreach (var route in tripRoute)
+            {
+                var directTripIds = _context.Trips.AsNoTracking().Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount &&  x.SourceTime.Date == sourceTime.Date).Select(x => x.Id).ToList();
+
+                foreach (var tripId in directTripIds)
+                {
+
+                    var Trip = new TripView();
+                    Trip =  FillTripView(tripId) ;
+                    Trips.Add(Trip);
+                }
+            }
+            return Trips;
         }
         [NonAction]
         public TripView FillTripView(int id)

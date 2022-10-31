@@ -1,4 +1,6 @@
-﻿using System.Security.Permissions;
+﻿using EuroTrip2.Models;
+using System.Security.Permissions;
+
 
 namespace EuroTrip2.ModelView
 {

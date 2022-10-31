@@ -20,7 +20,7 @@ namespace EuroTrip2.Models
         public Flight? Flight { get; set; }
 
      
-
-        public ICollection<Booking>? Bookings { get; set; }
+        public ICollection<SeatStatus>? SeatStatuses { get; set; }
+        public ICollection<Ticket>? Tickets { get; set; }
     }
 }

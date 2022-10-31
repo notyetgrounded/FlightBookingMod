@@ -4,6 +4,7 @@ using EuroTrip2.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EuroTrip2.Migrations
 {
     [DbContext(typeof(FlightDBContext))]
-    partial class FlightDBContextModelSnapshot : ModelSnapshot
+    [Migration("20221031104912_PassengerTable")]
+    partial class PassengerTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,19 +100,19 @@ namespace EuroTrip2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Age")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Gender")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("PassagerName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PassengerAge")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PassengerGender")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Passengers");
+                    b.ToTable("Passenger");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Place", b =>
@@ -185,6 +187,9 @@ namespace EuroTrip2.Migrations
                     b.Property<int>("Booking_Id")
                         .HasColumnType("int");
 
+                    b.Property<int>("PassengerId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Passenger_Id")
                         .HasColumnType("int");
 
@@ -201,7 +206,7 @@ namespace EuroTrip2.Migrations
 
                     b.HasIndex("Booking_Id");
 
-                    b.HasIndex("Passenger_Id");
+                    b.HasIndex("PassengerId");
 
                     b.HasIndex("Seat_Id");
 
@@ -363,7 +368,7 @@ namespace EuroTrip2.Migrations
 
                     b.HasOne("EuroTrip2.Models.Passenger", "Passenger")
                         .WithMany("Tickets")
-                        .HasForeignKey("Passenger_Id")
+                        .HasForeignKey("PassengerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

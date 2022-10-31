@@ -78,6 +78,10 @@ namespace EuroTrip2.Controllers
         [HttpPost]
         public async Task<ActionResult<TripRoute>> PostTripRoute(TripRoute tripRoute)
         {
+            if(tripRoute.Name=="")
+            {
+                tripRoute.Name = _context.Places.Where(x => x.Id == tripRoute.Source_Id).FirstOrDefault().IOTA + "-" + _context.Places.Where(x => x.Id == tripRoute.Destination_Id).FirstOrDefault().IOTA;
+            }
             _context.TripRoutes.Add(tripRoute);
             await _context.SaveChangesAsync();
 

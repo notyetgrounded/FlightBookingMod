@@ -83,6 +83,7 @@ namespace EuroTrip2.Controllers
             await _context.SaveChangesAsync();
             int id= flight.Id;
             char letter = 'A';
+            int count = 0;
             for (int i = 0; i < flight.SeatCount / 5; i++)
             {
                 for (int j = 0; j < 5; j++)
@@ -91,8 +92,19 @@ namespace EuroTrip2.Controllers
                     seat.Name=j.ToString() + letter;
                     seat.Flight_Id = flight.Id;
                     _context.Add(seat);
+                    count++;
                 }
                 letter++;
+            }
+            if(count<flight.SeatCount)
+            {
+                for (int j = 0; j < count; j++)
+                {
+                    var seat = new Seat();
+                    seat.Name = j.ToString() + letter;
+                    seat.Flight_Id = flight.Id;
+                    _context.Add(seat);
+                }
             }
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetFlight", new { id = flight.Id }, flight);
@@ -114,6 +126,7 @@ namespace EuroTrip2.Controllers
             return NoContent();
         }
 
+        [NonAction]
         private bool FlightExists(int id)
         {
             return _context.Flights.Any(e => e.Id == id);

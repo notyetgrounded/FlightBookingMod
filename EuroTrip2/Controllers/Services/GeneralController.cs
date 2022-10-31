@@ -27,9 +27,14 @@ namespace EuroTrip2.Controllers.Services
         {
             return await _context.Places.ToListAsync();
         }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TripRoute>>> GetTripRoutes()
+        {
+            return await _context.TripRoutes.ToListAsync();
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CompleteTrip>> GetOneStopTrips(int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
+        public ActionResult<IEnumerable<CompleteTrip>> GetOneStopTrips(int sourceId, int destinationId, DateTime sourceTime, int passengerCount)
         {
             List<CompleteTrip> completeTrips = new List<CompleteTrip>();
 
@@ -39,19 +44,19 @@ namespace EuroTrip2.Controllers.Services
                                 select new List<int>() { route1.Id, route2.Id };
             foreach (var route in oneStopRoutes)
             {
-                
-                var combinations = from trip1 in _context.Trips.Where(x => x.TripRoute_Id == route[0] && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(gap))
-                                   from trip2 in _context.Trips.Where(x => x.TripRoute_Id == route[1] && x.SourceTime >= trip1.DestinationTime && x.SourceTime <= trip1.DestinationTime.AddDays(gap))
-                                   select new List<int>() { trip1.Id,trip2.Id};
-                foreach(var trips in combinations)
+
+                var combinations = from trip1 in _context.Trips.Where(x => x.TripRoute_Id == route[0] && x.SourceTime >= sourceTime && x.SourceTime < sourceTime.AddDays(1))
+                                   from trip2 in _context.Trips.Where(x => x.TripRoute_Id == route[1] && x.SourceTime >= trip1.DestinationTime && x.SourceTime <= trip1.DestinationTime.AddDays(1))
+                                   select new List<int>() { trip1.Id, trip2.Id };
+                foreach (var trips in combinations)
                 {
                     var completeTrip = new CompleteTrip();
                     var tripViews = new List<TripView>();
-                    foreach(var tripid in trips)
+                    foreach (var tripid in trips)
                     {
-                        tripViews.Add(FillTripView(tripid));    
+                        tripViews.Add(FillTripView(tripid));
                     }
-                    completeTrip.TripViews= tripViews;
+                    completeTrip.TripViews = tripViews;
                     completeTrips.Add(completeTrip);
                 }
             }
@@ -59,23 +64,24 @@ namespace EuroTrip2.Controllers.Services
             return completeTrips;
 
         }
+        [HttpGet]
         public ActionResult<IEnumerable<TripView>> GetTrips(int sourceId, int destinationId, DateTime sourceTime, int passengerCount)
         {
             var tripRoute = _context.TripRoutes.Where(x => x.Source_Id == sourceId && x.Destination_Id == destinationId);
             //if (tripRoute == null)
             //{ return NoContent(); }
-            
-            List<TripView> Trips= new List<TripView>();
-            
+
+            List<TripView> Trips = new List<TripView>();
+
             foreach (var route in tripRoute)
             {
-                var directTripIds = _context.Trips.AsNoTracking().Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount &&  x.SourceTime.Date == sourceTime.Date).Select(x => x.Id).ToList();
+                var directTripIds = _context.Trips.AsNoTracking().Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime.Date == sourceTime.Date).Select(x => x.Id).ToList();
 
                 foreach (var tripId in directTripIds)
                 {
 
                     var Trip = new TripView();
-                    Trip =  FillTripView(tripId) ;
+                    Trip = FillTripView(tripId);
                     Trips.Add(Trip);
                 }
             }
@@ -84,15 +90,15 @@ namespace EuroTrip2.Controllers.Services
         [NonAction]
         public TripView FillTripView(int id)
         {
-            var trip = _context.Trips.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
-           
+            var trip = _context.Trips.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x => x.Id == id).SingleOrDefault();
+
             TripView tripView = new TripView();
             if (trip == null)
             {
                 return tripView;
             }
 
-            tripView.Id=trip.Id;
+            tripView.Id = trip.Id;
             tripView.FlightName = tripView.FlightName;
             tripView.SourceName = trip.TripRoute.Source.Name;
             tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
@@ -107,49 +113,49 @@ namespace EuroTrip2.Controllers.Services
 
         }
 
-        
 
-        [HttpGet]
-        public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
-        {
-            
-            var userQueary=_context.Users.Where(x=>x.Email==email);
-            if (userQueary==null  )
-            {
-                return NotFound();
-            }
-            var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
-            
-            
-            
-            if (user.Bookings==null)
-            {
-                return NoContent();
-            }
-            var records = user.Bookings;
-            List<BookingsView> bookings = new List<BookingsView>(); 
-            
-            foreach(var record in records)
-            {
-                BookingsView bookingsView = new BookingsView()
-                {
-                    BookingId = record.Id,
-                    PassengerName = record.PassengerName,
-                    PassengerAge = record.PassengerAge,
-                    PassengerGender = record.PassengerGender,
-                    DateTime = record.DateTime,
-                    TripId = (int)record.Trip_Id,
-                    TripName = record.Trip.Name,
-                    Source = GetLocation(record.Trip.TripRoute.Source_Id),
-                    Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
-                    Status = Enum.GetName(typeof(Options.BookingStatus),record.Status)
 
-                };
-                
-                bookings.Add(bookingsView);
-            }
-            return bookings;
-        }
+        //[HttpGet]
+        //public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
+        //{
+
+        //    var userQueary=_context.Users.Where(x=>x.Email==email);
+        //    if (userQueary==null  )
+        //    {
+        //        return NotFound();
+        //    }
+        //    var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
+
+
+
+        //    if (user.Bookings==null)
+        //    {
+        //        return NoContent();
+        //    }
+        //    var records = user.Bookings;
+        //    List<BookingsView> bookings = new List<BookingsView>(); 
+
+        //    foreach(var record in records)
+        //    {
+        //        BookingsView bookingsView = new BookingsView()
+        //        {
+        //            BookingId = record.Id,
+        //            PassengerName = record.PassengerName,
+        //            PassengerAge = record.PassengerAge,
+        //            PassengerGender = record.PassengerGender,
+        //            DateTime = record.DateTime,
+        //            TripId = (int)record.Trip_Id,
+        //            TripName = record.Trip.Name,
+        //            Source = GetLocation(record.Trip.TripRoute.Source_Id),
+        //            Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
+        //            Status = Enum.GetName(typeof(Options.BookingStatus),record.Status)
+
+        //        };
+
+        //        bookings.Add(bookingsView);
+        //    }
+        //    return bookings;
+        //}
         [NonAction]
         public string GetLocation(int id)
         {
@@ -157,49 +163,49 @@ namespace EuroTrip2.Controllers.Services
         }
 
 
-        [HttpGet]
-        public ActionResult<SeatsView> GetSeatStatusByTripId(int id )
-        {
-            var temp = _context.Trips.Where(x => x.Id == id);
-            if (!temp.Any())
-            {
-                return NotFound();
-            }
-            var trip = temp.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
-            var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
-            if (!seats.Any())
-            {
-                return NoContent();
-            }
-            var seatsView = new SeatsView();
-            seatsView.Price=trip.Price;
-            seatsView.TripName = trip.Name;
-            seatsView.TripId = trip.Id;
-            seatsView.Destination = trip.TripRoute.Destination.Name;
-            seatsView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
-            seatsView.DestinationTime = trip.DestinationTime;
-            seatsView.Source = trip.TripRoute.Source.Name;
-            seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
-            seatsView.SourceTime = trip.SourceTime;
-            
-            var seatStatusList = new List<SeatStatus>();
-            
-            var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
-            foreach(var seat in seats)
-            {
-                var seatStatus = new SeatStatus();
-                seatStatus.SeatName=seat.Name; 
-                seatStatus.SeatId= seat.Id;
-                seatStatus.Status = true;
-                if (bookedSeatsIds.Contains(seat.Id))
-                {
-                    seatStatus.Status = false;
-                }
-                seatStatusList.Add(seatStatus);
-            }
-            seatsView.Seats=seatStatusList;
-            return seatsView;
-        }
+        //[HttpGet]
+        //public ActionResult<SeatsView> GetSeatStatusByTripId(int id )
+        //{
+        //    var temp = _context.Trips.Where(x => x.Id == id);
+        //    if (!temp.Any())
+        //    {
+        //        return NotFound();
+        //    }
+        //    var trip = temp.AsNoTracking().Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
+        //    var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
+        //    if (!seats.Any())
+        //    {
+        //        return NoContent();
+        //    }
+        //    var seatsView = new SeatsView();
+        //    seatsView.Price=trip.Price;
+        //    seatsView.TripName = trip.Name;
+        //    seatsView.TripId = trip.Id;
+        //    seatsView.Destination = trip.TripRoute.Destination.Name;
+        //    seatsView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+        //    seatsView.DestinationTime = trip.DestinationTime;
+        //    seatsView.Source = trip.TripRoute.Source.Name;
+        //    seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
+        //    seatsView.SourceTime = trip.SourceTime;
+
+        //    var seatStatusList = new List<SeatStatusView>();
+
+        //    var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
+        //    foreach(var seat in seats)
+        //    {
+        //        var seatStatus = new SeatStatus();
+        //        seatStatus.SeatName=seat.Name; 
+        //        seatStatus.SeatId= seat.Id;
+        //        seatStatus.Status = true;
+        //        if (bookedSeatsIds.Contains(seat.Id))
+        //        {
+        //            seatStatus.Status = false;
+        //        }
+        //        seatStatusList.Add(seatStatus);
+        //    }
+        //    seatsView.Seats=seatStatusList;
+        //    return seatsView;
+        //}
 
     }
 }

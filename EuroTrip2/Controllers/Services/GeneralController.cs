@@ -5,6 +5,7 @@ using EuroTrip2.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Debugger.Contracts.HotReload;
 using Newtonsoft.Json;
 using NuGet.Configuration;
 using NuGet.Protocol;
@@ -115,47 +116,67 @@ namespace EuroTrip2.Controllers.Services
 
 
 
-        //[HttpGet]
-        //public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
-        //{
+        [HttpGet]
+        public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
+        {
 
-        //    var userQueary=_context.Users.Where(x=>x.Email==email);
-        //    if (userQueary==null  )
-        //    {
-        //        return NotFound();
-        //    }
-        //    var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
+            var userQueary = _context.Users.Where(x => x.Email == email);
+            if (userQueary == null)
+            {
+                return NotFound();
+            }
+            var user = userQueary.Include(x => x.Bookings).First();
+            if (user.Bookings == null)
+            {
+                return NoContent();
+            }
+            var bookings = _context.Bookings.Where(x=>x.User_Id==user.Id).Include(x => x.Trip).ThenInclude(x => x.TripRoute).Include(x=>x.Tickets).ThenInclude(x=>x.Passenger).Include(x=>x.Tickets).ThenInclude(x=>x.Seat);
 
+            List<BookingsView> bookingsViews = new List<BookingsView>();
 
+            foreach (var booking in bookings)
+            {
+                if (booking.NextBooking != null || booking.FromBooking!=null)
+                {
+                    continue;
+                }
+                BookingsView bookingsView = new BookingsView()
+                {
+                    BookingId = booking.Id,
+                    Name = booking.Name,
+                    Email = booking.Email,
+                    PhoneNo = booking.PhoneNo,
+                    DateTime = booking.BookingDate,
+                    TripId = (int)booking.Trip_Id,
+                    TripName = booking.Trip.Name,
+                    Source = GetLocation(booking.Trip.TripRoute.Source_Id),
+                    Destination = GetLocation(booking.Trip.TripRoute.Destination_Id),
+                    Status = (string)Enum.GetName(typeof(Options.BookingStatus), booking.Tickets.First().Status)
+                };
+                var passengers = new List<PassengerView>();
+                foreach(var ticket in booking.Tickets)
+                {
+                    PassengerView passenger = new PassengerView()
+                    {
+                        Name = ticket.Passenger.Name,
+                        Age = ticket.Passenger.Age,
+                        Gender = ticket.Passenger.Gender,
+                        TicketId = ticket.Id,
+                        Id = ticket.Passenger.Id,
+                        SeatName = ticket.Seat.Name,
+                        Price = ticket.Price,
+                        Status=(string)Enum.GetName(typeof(Options.BookingStatus), booking.Tickets.First().Status)
 
-        //    if (user.Bookings==null)
-        //    {
-        //        return NoContent();
-        //    }
-        //    var records = user.Bookings;
-        //    List<BookingsView> bookings = new List<BookingsView>(); 
+                    };
+                    passengers.Add(passenger);
+                }
+                bookingsView.Passengers = passengers;
+                
 
-        //    foreach(var record in records)
-        //    {
-        //        BookingsView bookingsView = new BookingsView()
-        //        {
-        //            BookingId = record.Id,
-        //            PassengerName = record.PassengerName,
-        //            PassengerAge = record.PassengerAge,
-        //            PassengerGender = record.PassengerGender,
-        //            DateTime = record.DateTime,
-        //            TripId = (int)record.Trip_Id,
-        //            TripName = record.Trip.Name,
-        //            Source = GetLocation(record.Trip.TripRoute.Source_Id),
-        //            Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
-        //            Status = Enum.GetName(typeof(Options.BookingStatus),record.Status)
-
-        //        };
-
-        //        bookings.Add(bookingsView);
-        //    }
-        //    return bookings;
-        //}
+                bookingsViews.Add(bookingsView);
+            }
+            return bookingsViews;
+        }
         [NonAction]
         public string GetLocation(int id)
         {

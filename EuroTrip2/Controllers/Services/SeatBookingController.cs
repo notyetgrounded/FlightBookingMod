@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace EuroTrip2.Controllers.Services
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[Action]")]
     [ApiController]
     public class SeatBookingController : ControllerBase
     {
